@@ -1,0 +1,32 @@
+{
+    "cells": [
+        {
+            "language": "javascript",
+            "source": [
+                "const shiftjis = require('shiftjis')\r\nconst ftpClient = require('ftp')\r\nconst makePromise = require('./makePromise')\r\nvar config = {\r\n    host: \"\",\r\n    port: 21,\r\n    secure: true,\r\n    user: \"\",\r\n    password: \"\",\r\n    secureOptions: {\r\n        rejectUnauthorized: false\r\n    }\r\n}\r\n\r\nconst client = new ftpClient()\r\nclient.connect(config);\r\n// monitor\r\nclient.on('close', ret => console.log(\"close\", ret))\r\nclient.on('end', () => console.log(\"end\"))\r\nclient.on('error', err => console.error(err))\r\nvar resp = await makePromise(cb => client.on('ready', cb))\r\nconsole.log(\"connected\")"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "javascript",
+            "source": [
+                "var dir = \"\"\r\nvar [err, currentDir] = await makePromise(cb => {\r\n    var encoded = shiftjis.encode(dir).toString(\"binary\")\r\n    client.cwd(encoded, cb)\r\n});\r\nif (err) console.error(err)\r\nconsole.log(currentDir)"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "javascript",
+            "source": [
+                "var fileTable = {}\r\nvar [err, list] = await makePromise(cb => client.list(cb))\r\nif (err) console.error(err)\r\nfileTable = list.reduce((acc, entery) => {\r\n    var name = shiftjis.decode(Buffer.from(entery.name, 'binary'))\r\n    acc.type.push(entery.type)\r\n    acc.name.push(name)\r\n    return acc\r\n}, { type: [], name: [] })\r\n\r\nimport { table } from 'arquero';\r\ntable(fileTable).print()"
+            ],
+            "outputs": []
+        },
+        {
+            "language": "javascript",
+            "source": [
+                "client.end()"
+            ],
+            "outputs": []
+        }
+    ]
+}
